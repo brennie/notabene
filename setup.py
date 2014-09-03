@@ -15,7 +15,8 @@ setup(
     ],
     install_requires=[
         'click',
-        'jinja2'
+        'jinja2',
+        'lockfile'
     ],
     packages=['notabene'],
     package_data={

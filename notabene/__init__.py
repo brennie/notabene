@@ -14,12 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import atexit
 from datetime import datetime
 import os
 from pathlib import Path
 import shutil
+import subprocess
 
 import click
+from jinja2 import Environment, FileSystemLoader, TemplateNotFound
+from lockfile import AlreadyLocked, LockFile
 
 '''notabene -- Note well
 
@@ -85,3 +89,115 @@ def note(editor):
     filename = Path(date.strftime('%Y-%m-%d.tex'))
 
     click.edit(editor=editor, filename=filename)
+
+
+@main.command()
+@click.option('--date-range', nargs=2, help='Only build notes for the specific date range.')
+@click.argument('date', nargs=-1)
+def build(date_range, date):
+    '''Build notes using pdflatex.
+
+    Dates should be specified in ISO 8601 format: YYYY-MM-DD.'''
+
+    def process_date_range(date):
+        try:
+            date = datetime.strptime(date, '%Y-%m-%d')
+            return date
+
+        except ValueError:
+            click.echo("Could not parse date `{0}': {1}".format(date, e.strerror))
+            os.exit(1)
+
+    lock = LockFile('.notabene.lock')
+    try:
+        lock.acquire(0)
+        atexit.register(LockFile.release, lock)  # We need to release the lock even if there is an exception.
+
+    except AlreadyLocked:
+        click.echo("Could not lock `.notebene.lock'. Is another process using it?", err=True)
+        os.exit(1)
+
+    template_filename = Path('template.tex')
+
+    all_notes = Path('.').glob('*.tex')
+
+    notes = []  # The notes we will build with.
+
+    for (i, note) in enumerate(all_notes):
+        if note == template_filename:
+            continue  # Skip over the template file.
+
+        try:
+            file_date = datetime.strptime(str(note), '%Y-%m-%d.tex')
+            notes.append({'filename': note, 'date': file_date})
+
+        except ValueError:
+            click.echo("File `{0}' was skipped as the filename is not an ISO 8601 date".format(note), err=True)
+
+    if date_range:
+        lower, upper = map(process_date_range, date_range)
+
+        notes = filter(lambda note: lower <= note.date <= upper, notes)
+
+    del all_notes
+
+    dates = date
+    for date in dates:
+        if not date.endswith('.tex'):
+            date += '.tex'
+
+        try:
+            file_date = datetime.strptime(date, '%Y-%m-%d.tex')
+
+        except ValueError:
+            click.echo("Date `{0}' is not a valid ISO 8601 date".format(date.rstrip('.tex')), err=True)
+            os.exit(1)
+
+        filename = Path(date)
+
+        if filename.exists():
+            notes.append({'filename': filename, 'date': file_date})
+        else:
+            click.echo("File `{0}' does not exist; skipping.".format(filename), err=True)
+
+    if len(notes) == 0:
+        click.echo('No notes to build.')
+        os.exit(0)
+
+    for i in range(len(notes)):
+        try:
+            with notes[i]['filename'].open() as f:
+                notes[i]['content'] = '\n'.join(f.readlines())
+
+        except OSError as e:
+            click.echo("Could not open `{0}': {1}".format(notes[i]['filename'], e.strerror), err=True)
+            os.exit(1)
+
+    env = Environment(loader=FileSystemLoader('.'))
+    env.block_start_string = '((*'
+    env.block_end_string = '*))'
+    env.variable_start_string = '((('
+    env.variable_end_string = ')))'
+
+    try:
+        template = env.get_template('template.tex')
+
+    except TemplateNotFound as e:
+        click.echo("Could not find `template.tex' -- is this a notabene subject directory?", err=True)
+        os.exit(1)
+
+    try:
+        with open('notes.tex', 'w') as f:
+            f.write(template.render(notes=notes))
+
+    except OSError as e:
+        click.echo("Could not write to `notes.tex': {1}".format(e.strerror))
+        os.exit(1)
+
+    if subprocess.call(['pdflatex', 'notes.tex'], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL) != 0:
+        click.echo('pdflatex returned non-zero; check notes.log for more information', err=True)
+
+    try:
+        os.unlink('notes.tex')
+    except OSError as e:
+        click.echo("Could not unlink `notes.tex'")
