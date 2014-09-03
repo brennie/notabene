@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from datetime import datetime
 import os
 from pathlib import Path
 import shutil
@@ -69,3 +70,18 @@ def new_subject(subject, edit):
 
     if edit:
         click.edit(filename=str(template_path))
+
+
+@main.command()
+@click.option('--editor', help='Specify the editor to use.')
+def note(editor):
+    '''Create a note for the current date and open it in your editor.
+
+    If a note already exists for the current date, it is not overwritten.
+    '''
+
+    date = datetime.now()
+
+    filename = Path(date.strftime('%Y-%m-%d.tex'))
+
+    click.edit(editor=editor, filename=filename)
