@@ -20,6 +20,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 
 import click
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
@@ -62,7 +63,7 @@ def new_subject(subject, edit):
         subject_path.mkdir()
     except OSError as e:
         click.echo('Could not initialize subject directory: {0}'.format(e.strerror), err=True)
-        os.exit(1)
+        sys.exit(1)
 
     template_path = subject_path / 'template.tex'
 
@@ -70,7 +71,7 @@ def new_subject(subject, edit):
         shutil.copyfile(str(USER_TEMPLATE), str(template_path))
     except OSError as e:
         click.echo('Could not copy template: {0}'.format(e.strerror), err=True)
-        os.exit(1)
+        sys.exit(1)
 
     if edit:
         click.edit(filename=str(template_path))
@@ -106,7 +107,7 @@ def build(date_range, date):
 
         except ValueError:
             click.echo("Could not parse date `{0}': {1}".format(date, e.strerror))
-            os.exit(1)
+            sys.exit(1)
 
     lock = LockFile('.notabene.lock')
     try:
@@ -115,7 +116,7 @@ def build(date_range, date):
 
     except AlreadyLocked:
         click.echo("Could not lock `.notebene.lock'. Is another process using it?", err=True)
-        os.exit(1)
+        sys.exit(1)
 
     template_filename = Path('template.tex')
 
@@ -151,7 +152,7 @@ def build(date_range, date):
 
         except ValueError:
             click.echo("Date `{0}' is not a valid ISO 8601 date".format(date.rstrip('.tex')), err=True)
-            os.exit(1)
+            sys.exit(1)
 
         filename = Path(date)
 
@@ -162,7 +163,7 @@ def build(date_range, date):
 
     if len(notes) == 0:
         click.echo('No notes to build.')
-        os.exit(0)
+        sys.exit(0)
 
     for i in range(len(notes)):
         try:
@@ -171,7 +172,7 @@ def build(date_range, date):
 
         except OSError as e:
             click.echo("Could not open `{0}': {1}".format(notes[i]['filename'], e.strerror), err=True)
-            os.exit(1)
+            sys.exit(1)
 
     env = Environment(loader=FileSystemLoader('.'))
     env.block_start_string = '((*'
@@ -184,7 +185,7 @@ def build(date_range, date):
 
     except TemplateNotFound as e:
         click.echo("Could not find `template.tex' -- is this a notabene subject directory?", err=True)
-        os.exit(1)
+        sys.exit(1)
 
     try:
         with open('notes.tex', 'w') as f:
@@ -192,7 +193,7 @@ def build(date_range, date):
 
     except OSError as e:
         click.echo("Could not write to `notes.tex': {1}".format(e.strerror))
-        os.exit(1)
+        sys.exit(1)
 
     if subprocess.call(['pdflatex', 'notes.tex'], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL) != 0:
         click.echo('pdflatex returned non-zero; check notes.log for more information', err=True)
