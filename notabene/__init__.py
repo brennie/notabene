@@ -65,7 +65,7 @@ def init(edit):
         sys.exit(1)
 
     if edit:
-        click.edit(filename=local_template))
+        click.edit(filename=local_template)
 
 
 @main.command()
