@@ -51,30 +51,21 @@ def main():
         click.echo('Could not create user template ({0}): {1}'.format(USER_TEMPLATE, e.strerror), err=True)
 
 
-@main.command(name='new')
-@click.argument('subject')
+@main.command()
 @click.option('--edit', is_flag=True, help='Edit the template after intialization.')
-def new_subject(subject, edit):
-    '''Create and initialize a new subject directory in `SUBJECT'.'''
+def init(edit):
+    '''Initialize a subject in the current directory.'''
 
-    subject_path = Path(subject)
-
-    try:
-        subject_path.mkdir()
-    except OSError as e:
-        click.echo('Could not initialize subject directory: {0}'.format(e.strerror), err=True)
-        sys.exit(1)
-
-    template_path = subject_path / 'template.tex'
+    local_template = 'template.tex'
 
     try:
-        shutil.copyfile(str(USER_TEMPLATE), str(template_path))
+        shutil.copyfile(str(USER_TEMPLATE), local_template)
     except OSError as e:
         click.echo('Could not copy template: {0}'.format(e.strerror), err=True)
         sys.exit(1)
 
     if edit:
-        click.edit(filename=str(template_path))
+        click.edit(filename=local_template))
 
 
 @main.command()
