@@ -14,11 +14,13 @@ setup(
         'Programming Language :: Python :: 3.4'
     ],
     install_requires=[
-        'appdirs',
         'click',
         'jinja2'
     ],
     packages=['notabene'],
+    package_data={
+        'notabene': ['template.tex']
+    },
     entry_points={
         'console_scripts': ['notabene=notabene:main']
     })

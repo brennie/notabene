@@ -14,15 +14,32 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+from pathlib import Path
+import shutil
+
+import click
+
 '''notabene -- Note well
 
 Stitch together individual note files with templates.
 '''
 
 VERSION = '0.0.1'
+USER_DATA_DIR = Path(click.get_app_dir('notabene'))
+USER_TEMPLATE = USER_DATA_DIR / 'template.tex'
+PACKAGE_TEMPLATE = Path(__file__).resolve().parents[0] / 'template.tex'
 
 
+@click.group()
 def main():
-    '''Run the notabene application.'''
+    '''Stitch together individual note files with templates.'''
 
-    pass
+    # Ensure that the udser template exists before running any subcommands.
+    try:
+        if not USER_TEMPLATE.exists():
+            if not USER_DATA_DIR.exists():
+                USER_DATA_DIR.mkdir(parents=True)
+            shutil.copyfile(str(PACKAGE_TEMPLATE), str(USER_TEMPLATE))
+    except OSError as e:
+        click.echo('Could not create user template ({0}): {1}'.format(USER_TEMPLATE, e.strerror), err=True)
