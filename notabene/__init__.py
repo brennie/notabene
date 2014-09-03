@@ -43,3 +43,29 @@ def main():
             shutil.copyfile(str(PACKAGE_TEMPLATE), str(USER_TEMPLATE))
     except OSError as e:
         click.echo('Could not create user template ({0}): {1}'.format(USER_TEMPLATE, e.strerror), err=True)
+
+
+@main.command(name='new')
+@click.argument('subject')
+@click.option('--edit', is_flag=True, help='Edit the template after intialization.')
+def new_subject(subject, edit):
+    '''Create and initialize a new subject directory in `SUBJECT'.'''
+
+    subject_path = Path(subject)
+
+    try:
+        subject_path.mkdir()
+    except OSError as e:
+        click.echo('Could not initialize subject directory: {0}'.format(e.strerror), err=True)
+        os.exit(1)
+
+    template_path = subject_path / 'template.tex'
+
+    try:
+        shutil.copyfile(str(USER_TEMPLATE), str(template_path))
+    except OSError as e:
+        click.echo('Could not copy template: {0}'.format(e.strerror), err=True)
+        os.exit(1)
+
+    if edit:
+        click.edit(filename=str(template_path))
