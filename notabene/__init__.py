@@ -159,7 +159,7 @@ def build(date_range, date):
     for i in range(len(notes)):
         try:
             with notes[i]['filename'].open() as f:
-                notes[i]['content'] = '\n'.join(f.readlines())
+                notes[i]['content'] = ''.join(f.readlines())
 
         except OSError as e:
             click.echo("Could not open `{0}': {1}".format(notes[i]['filename'], e.strerror), err=True)
