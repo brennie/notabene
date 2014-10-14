@@ -24,5 +24,5 @@ setup(
         'notabene': ['template.tex']
     },
     entry_points={
-        'console_scripts': ['notabene=notabene:main']
+        'console_scripts': ['notabene=notabene.commands:main']
     })
