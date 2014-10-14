@@ -41,7 +41,7 @@ PACKAGE_TEMPLATE = Path(__file__).resolve().parents[0] / 'template.tex'
 def main():
     '''Stitch together individual note files with templates.'''
 
-    # Ensure that the udser template exists before running any subcommands.
+    # Ensure that the user template exists before running any subcommands.
     try:
         if not USER_TEMPLATE.exists():
             if not USER_DATA_DIR.exists():
