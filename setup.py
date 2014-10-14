@@ -10,7 +10,8 @@ setup(
     license='GPLv3',
     classifiers=[
         'Development Status :: 3 - Alpha',
-        'License :: OSI Approved :: GNU General Public LIcense V3 or later (GPLv3+)',
+        'License :: OSI Approved :: GNU General Public License V3 or later '
+        '(GPLv3+)',
         'Programming Language :: Python :: 3.4'
     ],
     install_requires=[
