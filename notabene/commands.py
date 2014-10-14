@@ -48,11 +48,15 @@ def main():
                 USER_DATA_DIR.mkdir(parents=True)
             shutil.copyfile(str(PACKAGE_TEMPLATE), str(USER_TEMPLATE))
     except OSError as e:
-        click.echo('Could not create user template ({0}): {1}'.format(USER_TEMPLATE, e.strerror), err=True)
+        click.echo(
+            'Could not create user template ({0}): {1}'.format(USER_TEMPLATE,
+                                                               e.strerror),
+            err=True)
 
 
 @main.command()
-@click.option('--edit', is_flag=True, help='Edit the template after intialization.')
+@click.option('--edit', is_flag=True,
+              help='Edit the template after intialization.')
 def init(edit):
     '''Initialize a subject in the current directory.'''
 
@@ -84,7 +88,8 @@ def note(editor):
 
 
 @main.command()
-@click.option('--date-range', nargs=2, help='Only build notes for the specific date range.')
+@click.option('--date-range', nargs=2,
+              help='Only build notes for the specific date range.')
 @click.argument('date', nargs=-1)
 def build(date_range, date):
     '''Build notes using pdflatex.
@@ -97,16 +102,20 @@ def build(date_range, date):
             return date
 
         except ValueError:
-            click.echo("Could not parse date `{0}': {1}".format(date, e.strerror))
+            click.echo("Could not parse date `{0}': {1}".format(date,
+                                                                e.strerror))
             sys.exit(1)
 
     lock = LockFile('.notabene.lock')
     try:
         lock.acquire(0)
-        atexit.register(LockFile.release, lock)  # We need to release the lock even if there is an exception.
+        # We need to release the lock even if there is an exception.
+        atexit.register(LockFile.release, lock)
 
     except AlreadyLocked:
-        click.echo("Could not lock `.notebene.lock'. Is another process using it?", err=True)
+        click.echo(
+            "Could not lock `.notebene.lock'. Is another process using it?",
+            err=True)
         sys.exit(1)
 
     template_filename = Path('template.tex')
@@ -124,7 +133,9 @@ def build(date_range, date):
             notes.append({'filename': note, 'date': file_date})
 
         except ValueError:
-            click.echo("File `{0}' was skipped as the filename is not an ISO 8601 date".format(note), err=True)
+            click.echo(
+                "File `{0}' was skipped as the filename is not an ISO 8601 "
+                "date".format(note), err=True)
 
     if date_range:
         lower, upper = map(process_date_range, date_range)
@@ -142,7 +153,10 @@ def build(date_range, date):
             file_date = datetime.strptime(date, '%Y-%m-%d.tex')
 
         except ValueError:
-            click.echo("Date `{0}' is not a valid ISO 8601 date".format(date.rstrip('.tex')), err=True)
+            click.echo(
+                "Date `{0}' is not a valid ISO 8601 date".format(
+                    date.rstrip('.tex')),
+                err=True)
             sys.exit(1)
 
         filename = Path(date)
@@ -150,7 +164,8 @@ def build(date_range, date):
         if filename.exists():
             notes.append({'filename': filename, 'date': file_date})
         else:
-            click.echo("File `{0}' does not exist; skipping.".format(filename), err=True)
+            click.echo("File `{0}' does not exist; skipping.".format(filename),
+                       err=True)
 
     if len(notes) == 0:
         click.echo('No notes to build.')
@@ -162,7 +177,9 @@ def build(date_range, date):
                 notes[i]['content'] = ''.join(f.readlines())
 
         except OSError as e:
-            click.echo("Could not open `{0}': {1}".format(notes[i]['filename'], e.strerror), err=True)
+            click.echo("Could not open `{0}': {1}".format(notes[i]['filename'],
+                                                          e.strerror),
+                       err=True)
             sys.exit(1)
 
     env = Environment(loader=FileSystemLoader('.'))
@@ -175,7 +192,9 @@ def build(date_range, date):
         template = env.get_template('template.tex')
 
     except TemplateNotFound as e:
-        click.echo("Could not find `template.tex' -- is this a notabene subject directory?", err=True)
+        click.echo(
+            "Could not find `template.tex' -- is this a notabene subject "
+            "directory?", err=True)
         sys.exit(1)
 
     try:
@@ -186,8 +205,11 @@ def build(date_range, date):
         click.echo("Could not write to `notes.tex': {1}".format(e.strerror))
         sys.exit(1)
 
-    if subprocess.call(['pdflatex', 'notes.tex'], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL) != 0:
-        click.echo('pdflatex returned non-zero; check notes.log for more information', err=True)
+    if subprocess.call(['pdflatex', 'notes.tex'], stdin=subprocess.DEVNULL,
+                       stdout=subprocess.DEVNULL) != 0:
+        click.echo(
+            'pdflatex returned non-zero; check notes.log for more '
+            'information', err=True)
 
     try:
         os.unlink('notes.tex')
