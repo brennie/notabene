@@ -1,12 +1,12 @@
 from setuptools import setup
 
-import notabene
+import notestitch
 
 setup(
-    name='notabene',
-    version=notabene.VERSION,
-    description=notabene.__doc__,
-    url='https://github.com/brennie/notabene',
+    name='notestitch',
+    version=notestitch.VERSION,
+    description=notestitch.__doc__,
+    url='https://github.com/brennie/notestitch',,
     license='GPLv3',
     classifiers=[
         'Development Status :: 3 - Alpha',
@@ -19,10 +19,10 @@ setup(
         'jinja2',
         'lockfile'
     ],
-    packages=['notabene'],
+    packages=['notestitch'],
     package_data={
-        'notabene': ['template.tex']
+        'notestitch': ['template.tex']
     },
     entry_points={
-        'console_scripts': ['notabene=notabene.commands:main']
+        'console_scripts': ['notestitch=notestitch.commands:main']
     })
